@@ -1,0 +1,30 @@
+node_modules
+dist
+build
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# local env files
+.env.production.local
+.env.production
+
+.env.development.local
+.env.development
+
+.env.test.local
+.env.test
+
+.env.local
+.env
+

@@ -1,0 +1,63 @@
+version: '3.8'
+
+x-common-variables: &common-variables
+  MYSQL_DATABASE: $MYSQL_DATABASE
+  MYSQL_USER: $MYSQL_USER
+  MYSQL_PASSWORD: $MYSQL_PASSWORD
+
+services:
+  db:
+    image: mysql
+    restart: always
+    cap_add:
+      - SYS_NICE
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./db/init.sql:/docker-entrypoint-initdb.d/setup.sql
+    environment:
+      <<: *common-variables
+      MYSQL_ROOT_PASSWORD: $MYSQL_ROOT_PASSWORD
+    healthcheck:
+      test: ["CMD-SHELL", "mysql -u  ${MYSQL_USER} -p$$MYSQL_PASSWORD" ]
+      interval: 30s
+      timeout: 20s
+      retries: 10
+    networks:
+      db_api: 
+        aliases:
+          - db_api_mysql
+
+  api:
+    build:
+      context: ./api
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      <<: *common-variables
+      PORT: $API_PORT
+    ports:
+      - "${API_PORT}:${API_PORT}"
+    networks:
+      - db_api
+    # network_mode: bridge
+
+  app:
+    build:
+      context: ./app
+      dockerfile: docker/Dockerfile
+      args:
+        BLOG_ENDPOINT: http:\\localhost:${API_PORT}
+    depends_on:
+      - api
+    environment:
+      PORT: $CLIENT_PORT
+    ports:
+      - "${CLIENT_PORT}:${CLIENT_PORT}"
+
+volumes:
+  mysql_data:
+
+networks:
+  db_api:
+    driver: bridge
